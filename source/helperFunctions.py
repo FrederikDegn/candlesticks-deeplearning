@@ -27,8 +27,8 @@ from os.path import exists
 import glob #read csv files pattern matching
 import re #regex
 
-import tensorflow as tf
-import tensorflow_io as tfio
+#import tensorflow as tf
+#import tensorflow_io as tfio
 
 
 ######   Config params  ######
@@ -351,7 +351,7 @@ def dataPrep(fname):
     #df.groupby(['Target'])['Target'].count()
     return df
 
-def createCandlesticksPlot(data,index,targetLabel,inRAM = True):  
+def createCandlesticksPlot(data,index,targetLabel,inRAM = False):  
     """
     Core function that creates the plot and saves to a file
     Argument:
@@ -369,10 +369,12 @@ def createCandlesticksPlot(data,index,targetLabel,inRAM = True):
 
    
     #Create custom styles
-    mc = mpf.make_marketcolors(up='green'
-                               ,down='red'
+    mc = mpf.make_marketcolors(up='black'
+                               ,down='black'
+                               ,volume='black'
+                               ,ohlc='black'
                                ,edge='inherit'
-                               ,wick={'up':'blue','down':'orange'}
+                               ,wick={'up':'black','down':'black'}
                                ,alpha = 1.0)
 
     rc = {'xtick.major.bottom':False
@@ -380,9 +382,9 @@ def createCandlesticksPlot(data,index,targetLabel,inRAM = True):
         ,'xtick.major.size':0
         ,'ytick.major.size':0
         ,'axes.labelsize' : 0
-        ,'savefig.jpeg_quality' : 95
+        #,'savefig.jpeg_quality' : 95
         ,'savefig.bbox':'tight'
-
+        ,'savefig.facecolor':'white'
         ,'axes.spines.left' :False #plot border
         ,'axes.spines.top' :False
         ,'axes.spines.bottom' :False
@@ -392,8 +394,8 @@ def createCandlesticksPlot(data,index,targetLabel,inRAM = True):
     s  = mpf.make_mpf_style(marketcolors=mc,rc = rc,mavcolors = ['black'])
     
     # First we set the kwargs that we will use for all of these examples:
-    kwargs = dict(type='candle',volume=False,figratio=(3,3) #was (5,5)
-                    ,figscale=1,mav = (1,6)
+    kwargs = dict(type='ohlc',volume=True,figratio=(3,3) #was (5,5)
+                    ,figscale=3, mav = (2,6)
                     #,title = title
                     )
     #mpf.plot(data,**kwargs,style = s,savefig=r'data/temp_image.png')
@@ -404,10 +406,10 @@ def createCandlesticksPlot(data,index,targetLabel,inRAM = True):
     if inRAM == True:
         mpf.plot(data
                 ,**kwargs
-                ,scale_width_adjustment=dict(candle=1,lines=2)
-                ,update_width_config=dict(candle_linewidth=12)
+                ,scale_width_adjustment=dict(ohlc=1,lines=2,volume=1)
+                ,update_width_config=dict(ohlc_linewidth=8,volume_linewidth=0.01)
                 ,style = s
-                ,savefig='/ramdisk/temp_image'+ str(index) +'.png')
+                ,savefig='temp_image'+ str(index) +'.png') #'/ramdisk/temp_image'+ str(index) +'.png')
     elif inRAM == False:
         mpf.plot(data,**kwargs,style = s,savefig='data/temp_image'+ str(index) +'.png')
 
@@ -440,7 +442,7 @@ def createXYarrays(group):
     First attempt was creating set_x_sub as a list but later settled with single array containing both x and y ie set_xy
     """
 
-    loop_range=  (group['Symbol'].count()) -  (DATE_WINDOW) - 10    
+    loop_range=  (group['Symbol'].count()) -  (DATE_WINDOW) - 10        
     #loop_range = 5
     symbolDate = group[-1:]['Date'].item()
     symbolDate = symbolDate.strftime('%Y%m%d')
@@ -473,7 +475,7 @@ def createXYarrays(group):
         createCandlesticksPlot(group[-DATE_WINDOW:],fname
                             ,targetLabel = targetLabel
                             ,inRAM=True)
-        img_asNumpy = np.array(Image.open('/ramdisk/temp_image'+ fname + '.png').resize((IMG_SIZE,IMG_SIZE)))
+        img_asNumpy = np.array(Image.open('temp_image'+ fname + '.png').resize((IMG_SIZE,IMG_SIZE)))
         
         #image_without_alpha 
         img_asNumpy = img_asNumpy[:,:,:3]
